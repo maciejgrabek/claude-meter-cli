@@ -1,0 +1,17 @@
+{
+  "name": "claude-meter",
+  "version": "0.2.1",
+  "description": "Simple CLI to view Claude Code usage stats",
+  "type": "module",
+  "bin": {
+    "claude-meter": "./usage.mjs"
+  },
+  "scripts": {
+    "start": "node usage.mjs"
+  },
+  "keywords": ["claude", "anthropic", "usage", "cli", "stats"],
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  }
+}

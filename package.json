@@ -4,13 +4,36 @@
   "description": "Simple CLI to view Claude Code usage stats",
   "type": "module",
   "bin": {
-    "claude-meter": "./usage.mjs"
+    "claude-meter": "usage.mjs"
   },
   "scripts": {
     "start": "node usage.mjs"
   },
-  "keywords": ["claude", "anthropic", "usage", "cli", "stats"],
+  "keywords": [
+    "claude",
+    "anthropic",
+    "usage",
+    "cli",
+    "stats",
+    "claude-code",
+    "dashboard",
+    "terminal"
+  ],
   "license": "MIT",
+  "author": "Maciej Grabek",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/maciejgrabek/claude-meter-cli.git"
+  },
+  "homepage": "https://github.com/maciejgrabek/claude-meter-cli#readme",
+  "bugs": {
+    "url": "https://github.com/maciejgrabek/claude-meter-cli/issues"
+  },
+  "files": [
+    "usage.mjs",
+    "README.md",
+    "LICENSE"
+  ],
   "engines": {
     "node": ">=18"
   }

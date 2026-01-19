@@ -8,6 +8,7 @@ import { readFileSync, existsSync, watchFile, writeFileSync, unlinkSync } from '
 import { homedir } from 'os';
 import { join } from 'path';
 import { createInterface } from 'readline';
+import https from 'https';
 
 const VERSION = '0.2.1';
 
@@ -58,6 +59,9 @@ let progressInterval = null;
 const STATS_FILE = join(homedir(), '.claude', 'stats-cache.json');
 const GOALS_FILE = join(homedir(), '.claude', 'claude-meter-goals.json');
 const AUTH_FILE = join(homedir(), '.claude', 'claude-meter-auth.json');
+const UPDATE_CACHE_FILE = join(homedir(), '.claude', 'claude-meter-update-cache.json');
+const GITHUB_REPO = 'maciejgrabek/claude-meter-cli';
+const UPDATE_CHECK_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours in ms
 
 // Parse args
 const args = process.argv.slice(2);
@@ -87,6 +91,9 @@ const authLogout = args.includes('--logout');
 
 // Popup window
 const popupArg = args.includes('--popup');
+
+// Update check
+const noUpdateCheck = args.includes('--no-update-check');
 
 // Watch interval
 const intervalArg = args.find(a => !a.startsWith('-') && !isNaN(a) && args.indexOf(a) !== exportIndex + 1);
@@ -128,6 +135,9 @@ ${c.bold}AUTHENTICATION${c.reset}
 
 ${c.bold}WINDOW${c.reset}
   ${c.cyan}--popup${c.reset}           Open in a new terminal window (cross-platform)
+
+${c.bold}OTHER${c.reset}
+  ${c.cyan}--no-update-check${c.reset} Skip checking for new versions
 
 ${c.bold}WATCH MODE CONTROLS${c.reset}
   ${c.cyan}q${c.reset}                 Quit watch mode
@@ -475,6 +485,103 @@ function doLogout() {
   }
 }
 
+// Update check functions
+function compareVersions(v1, v2) {
+  const parts1 = v1.replace(/^v/, '').split('.').map(Number);
+  const parts2 = v2.replace(/^v/, '').split('.').map(Number);
+  for (let i = 0; i < Math.max(parts1.length, parts2.length); i++) {
+    const p1 = parts1[i] || 0;
+    const p2 = parts2[i] || 0;
+    if (p1 < p2) return -1;
+    if (p1 > p2) return 1;
+  }
+  return 0;
+}
+
+function loadUpdateCache() {
+  try {
+    if (existsSync(UPDATE_CACHE_FILE)) {
+      return JSON.parse(readFileSync(UPDATE_CACHE_FILE, 'utf8'));
+    }
+  } catch {}
+  return null;
+}
+
+function saveUpdateCache(data) {
+  try {
+    writeFileSync(UPDATE_CACHE_FILE, JSON.stringify(data, null, 2));
+  } catch {}
+}
+
+function fetchLatestVersion() {
+  return new Promise((resolve) => {
+    const options = {
+      hostname: 'api.github.com',
+      path: `/repos/${GITHUB_REPO}/tags`,
+      headers: { 'User-Agent': 'claude-meter' }
+    };
+
+    const req = https.get(options, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        try {
+          const tags = JSON.parse(data);
+          if (tags && tags.length > 0 && tags[0].name) {
+            resolve(tags[0].name.replace(/^v/, ''));
+          } else {
+            resolve(null);
+          }
+        } catch {
+          resolve(null);
+        }
+      });
+    });
+
+    req.on('error', () => resolve(null));
+    req.setTimeout(3000, () => { req.destroy(); resolve(null); });
+  });
+}
+
+async function checkForUpdates() {
+  // Check cache first
+  const cache = loadUpdateCache();
+  const now = Date.now();
+
+  if (cache && cache.checkedAt && (now - cache.checkedAt) < UPDATE_CHECK_INTERVAL) {
+    // Use cached result
+    if (cache.latestVersion && compareVersions(VERSION, cache.latestVersion) < 0) {
+      return cache.latestVersion;
+    }
+    return null;
+  }
+
+  // Fetch from GitHub
+  const latestVersion = await fetchLatestVersion();
+
+  // Save to cache
+  saveUpdateCache({
+    checkedAt: now,
+    latestVersion,
+    currentVersion: VERSION
+  });
+
+  if (latestVersion && compareVersions(VERSION, latestVersion) < 0) {
+    return latestVersion;
+  }
+  return null;
+}
+
+function showUpdateNotification(latestVersion) {
+  const msg = `Update available: ${c.dim}${VERSION}${c.reset} → ${c.green}${latestVersion}${c.reset}`;
+  const installCmd = `${c.cyan}npm install -g claude-meter${c.reset}`;
+  console.log(`${c.yellow}╭─ New version ──────────────────────────────╮${c.reset}`);
+  console.log(`${c.yellow}│${c.reset} ${msg.padEnd(55)}${c.yellow}│${c.reset}`);
+  console.log(`${c.yellow}│${c.reset} Run: ${installCmd}              ${c.yellow}│${c.reset}`);
+  console.log(`${c.yellow}╰────────────────────────────────────────────╯${c.reset}`);
+  console.log();
+}
+
 async function main() {
   // Handle special commands first
   if (showHelp) {
@@ -510,6 +617,14 @@ async function main() {
   if (popupArg) {
     await openPopupWindow();
     return;
+  }
+
+  // Check for updates (non-blocking, cached)
+  if (!noUpdateCheck) {
+    const updateAvailable = await checkForUpdates();
+    if (updateAvailable) {
+      showUpdateNotification(updateAvailable);
+    }
   }
 
   // Check stats file exists

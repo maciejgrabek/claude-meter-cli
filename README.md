@@ -65,8 +65,6 @@ npm link
 npm install -g claude-meter
 ```
 
-> *Not published yet - coming soon maybe, if I get around to it*
-
 ## Usage
 
 ### Basic Commands
@@ -188,6 +186,29 @@ claude-meter --popup
 | `--export <file>` | Export stats to JSON file |
 | `--auth` | Link to Claude CLI OAuth |
 | `--logout` | Remove stored credentials |
+| `--no-update-check` | Skip checking for new versions |
+
+## Update Notifications
+
+Claude Meter automatically checks for new versions on GitHub once per day. If a newer version is available, you'll see a notification:
+
+```
+╭─ New version ──────────────────────────────╮
+│ Update available: 0.2.1 → 0.3.0            │
+│ Run: npm install -g claude-meter           │
+╰────────────────────────────────────────────╯
+```
+
+**How it works:**
+- Fetches the latest tag from `github.com/maciejgrabek/claude-meter-cli`
+- Caches the result for 24 hours (stored in `~/.claude/claude-meter-update-cache.json`)
+- Fails silently if offline or GitHub is unreachable
+- 3-second timeout to avoid slowing down startup
+
+**To disable:**
+```bash
+claude-meter --no-update-check
+```
 
 ## How It Works
 
@@ -254,6 +275,7 @@ Claude Meter stores minimal data locally:
 |------|---------|
 | `~/.claude/claude-meter-goals.json` | Your goal settings |
 | `~/.claude/claude-meter-auth.json` | Cached OAuth reference |
+| `~/.claude/claude-meter-update-cache.json` | Update check cache (24h TTL) |
 
 ## What About Costs?
 

@@ -38,27 +38,27 @@ Tokens     12M        156M         412M        1.2B
 
 ## Installation
 
-### Option 1: npm (recommended)
+### Option 1: Install from GitHub (recommended)
 
 ```bash
-npm install -g claude-meter
+npm install -g github:maciejgrabek/claude-meter-cli
 ```
 
 ### Option 2: Clone and link
 
 ```bash
-git clone https://github.com/anthropics/claude-meter-cli.git
+git clone https://github.com/maciejgrabek/claude-meter-cli.git
 cd claude-meter-cli
 npm link
 ```
 
-### Option 3: Run directly
+### Option 3: npm registry
 
 ```bash
-npx claude-meter
-# or
-node usage.mjs
+npm install -g claude-meter
 ```
+
+> *Not published yet - coming soon maybe, if I get around to it*
 
 ## Usage
 

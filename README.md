@@ -38,6 +38,13 @@ Tokens     12M        156M         412M        1.2B
 
 ## Installation
 
+### Option 0: The AI way
+
+Give Claude this repo link and say "figure it out":
+```
+https://github.com/maciejgrabek/claude-meter-cli
+```
+
 ### Option 1: Install from GitHub (recommended)
 
 ```bash

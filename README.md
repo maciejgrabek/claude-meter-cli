@@ -77,6 +77,9 @@ claude-meter -w 10
 # Open in a separate terminal window
 claude-meter --popup
 
+# My favorite: popup + watch mode + 60s refresh (perfect desk companion)
+claude-meter --popup -w 60
+
 # Show help
 claude-meter --help
 ```
